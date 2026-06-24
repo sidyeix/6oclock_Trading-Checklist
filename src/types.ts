@@ -1,84 +1,69 @@
+// Theme
+export type ThemeMode = 'light' | 'dark';
+
+// Trading Session
+export type TradingSession = 'Asia' | 'London' | 'New York' | '';
+
+// Daily Preparation
+export interface DailyPrepState {
+  pdhMarked: boolean;
+  pdlMarked: boolean;
+}
+
+// Market Structure — simple bias per timeframe
+export type BiasOption = 'Bullish' | 'Bearish' | 'Range' | '';
+
 export interface MarketStructureState {
-  bias4h: 'Bullish' | 'Bearish' | 'Ranging' | '';
-  bias1h: 'Bullish' | 'Bearish' | 'Ranging' | '';
-  bias15m: 'Bullish' | 'Bearish' | 'Ranging' | '';
-  reason4h: string;
-  reason1h: string;
-  reason15m: string;
-  confirm4h: boolean;
-  confirm1h: boolean;
-  confirm15m: boolean;
-  htfAlignment: boolean;
-  screenshot4h: string;
-  screenshot1h: string;
-  screenshot15m: string;
+  bias4h: BiasOption;
+  bias1h: BiasOption;
+  bias15m: BiasOption;
 }
 
+// Key Levels — checkboxes grouped by timeframe
 export interface KeyLevelsState {
-  at1hKeyLevel: boolean;
-  at15mKeyLevel: boolean;
-  freshSupplyZone: boolean;
-  freshDemandZone: boolean;
-  premiumArea: boolean;
-  discountArea: boolean;
-  dailyHighLiquidity: boolean;
-  dailyLowLiquidity: boolean;
+  // 4H
+  demand4h: boolean;
+  supply4h: boolean;
+  orderBlock4h: boolean;
+  // 1H
+  demand1h: boolean;
+  supply1h: boolean;
+  orderBlock1h: boolean;
+  // 15M
+  demand15m: boolean;
+  supply15m: boolean;
+  orderBlock15m: boolean;
 }
 
-export interface SessionConfirmationState {
-  sessionType: 'London Continuation' | 'New York Reversal' | 'London-New York Overlap' | '';
-  sessionAligns: boolean;
+// Non Negotiables Checklist
+export interface NonNegotiablesState {
+  htfAlignment: boolean;
+  liquiditySwept: boolean;
+  rrValid: boolean;
 }
 
-export interface EntryConfirmationState {
-  entryType: 'Aggressive' | 'Conservative' | '';
+// Execution Parameters — Aggressive & Conservative Entry Models
+export interface ExecutionParamsState {
+  // Aggressive
   liquiditySweep: boolean;
   engulfingCandle: boolean;
-  mss: boolean;
-  threeCandle: boolean;
-  retest: boolean;
-  structureShift: boolean;
+  candleClosed: boolean;
+  // Conservative
+  chochFormed: boolean;
+  retestEntry: boolean;
+  riskEntry: boolean;
 }
 
-export interface RiskManagementState {
-  riskOnePercent: boolean;
-  rrThreeToOne: boolean;
-  slDefined: boolean;
-  tpDefined: boolean;
+// Timeline Journal Entry
+export interface TimelineEntry {
+  id: string;
+  timestamp: string;
+  note: string;
+  isAutoTimestamp: boolean;
 }
 
-export interface PsychologyState {
-  fear: number;
-  confidence: number;
-  patience: number;
-  focus: number;
-  greed: number;
-  frustration: number;
-  emotionStable: boolean;
-  noFomo: boolean;
-  followingPlan: boolean;
-}
-
-export interface JournalState {
-  whatDoISee: string;
-  whyShouldPriceMove: string;
-  whatInvalidates: string;
-  whatEmotion: string;
-  targetLiquidity: string;
-  whatMistake: string;
-}
-
-export interface TradingSession {
-  date: string;
-  marketStructure: MarketStructureState;
-  keyLevels: KeyLevelsState;
-  sessionConfirmation: SessionConfirmationState;
-  entryConfirmation: EntryConfirmationState;
-  riskManagement: RiskManagementState;
-  psychology: PsychologyState;
-  journal: JournalState;
-  tradeQualityScore: number;
-  verdict: string;
-  isExecuted: boolean;
-  executedAt?: string;
+// Trade Screenshots for PDF Export
+export interface TradeScreenshots {
+  htfScreenshot: string;   // base64 data URL — 4H or 1H chart
+  entryScreenshot: string; // base64 data URL — 15M or 5M chart
 }

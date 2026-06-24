@@ -1,107 +1,69 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  CheckCircle, Info, Flame, Sparkles
-} from 'lucide-react';
+import { RotateCcw, Sparkles, AlertTriangle } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { getDailyQuote } from './data/quotes';
-import { ResetModal } from './components/ResetModal';
+import { ThemeToggle } from './components/ThemeToggle';
+import { DailyPreparation } from './components/DailyPreparation';
+import { MarketStructure } from './components/MarketStructure';
+import { KeyLevels } from './components/KeyLevels';
+import { ExecutionParams } from './components/ExecutionParams';
 import { NonNegotiables } from './components/NonNegotiables';
-import { ScoreEngine } from './components/ScoreEngine';
-import { SessionChecklist } from './components/SessionChecklist';
-import { TradingJournal } from './components/TradingJournal';
-import { MobileVerdictFAB } from './components/MobileVerdictFAB';
+import { SessionSelector } from './components/SessionSelector';
+import { TradingTimeline } from './components/TradingTimeline';
+import { PDFExport } from './components/PDFExport';
 import type {
-  MarketStructureState, KeyLevelsState,
-  SessionConfirmationState, EntryConfirmationState,
-  RiskManagementState, PsychologyState, JournalState
+  ThemeMode, DailyPrepState, MarketStructureState,
+  KeyLevelsState, ExecutionParamsState, TimelineEntry, TradeScreenshots,
+  TradingSession, NonNegotiablesState
 } from './types';
 
-// Default initial state for a trading day
-const defaultMarketStructure: MarketStructureState = {
-  bias4h: '', bias1h: '', bias15m: '',
-  reason4h: '', reason1h: '', reason15m: '',
-  confirm4h: false, confirm1h: false, confirm15m: false,
-  htfAlignment: false,
-  screenshot4h: '', screenshot1h: '', screenshot15m: ''
-};
-
+// Default states
+const defaultDailyPrep: DailyPrepState = { pdhMarked: false, pdlMarked: false };
+const defaultMarketStructure: MarketStructureState = { bias4h: '', bias1h: '', bias15m: '' };
 const defaultKeyLevels: KeyLevelsState = {
-  at1hKeyLevel: false,
-  at15mKeyLevel: false,
-  freshSupplyZone: false,
-  freshDemandZone: false,
-  premiumArea: false,
-  discountArea: false,
-  dailyHighLiquidity: false,
-  dailyLowLiquidity: false
+  demand4h: false, supply4h: false, orderBlock4h: false,
+  demand1h: false, supply1h: false, orderBlock1h: false,
+  demand15m: false, supply15m: false, orderBlock15m: false,
 };
-
-const defaultSessionConfirmation: SessionConfirmationState = {
-  sessionType: '',
-  sessionAligns: false
+const defaultExecutionParams: ExecutionParamsState = {
+  liquiditySweep: false, engulfingCandle: false, candleClosed: false,
+  chochFormed: false, retestEntry: false, riskEntry: false,
 };
-
-const defaultEntryConfirmation: EntryConfirmationState = {
-  entryType: '',
-  liquiditySweep: false,
-  engulfingCandle: false,
-  mss: false,
-  threeCandle: false,
-  retest: false,
-  structureShift: false
+const defaultNonNegotiables: NonNegotiablesState = {
+  htfAlignment: false,
+  liquiditySwept: false,
+  rrValid: false,
 };
-
-const defaultRiskManagement: RiskManagementState = {
-  riskOnePercent: false,
-  rrThreeToOne: false,
-  slDefined: false,
-  tpDefined: false,
-};
-
-const defaultPsychology: PsychologyState = {
-  fear: 3,
-  confidence: 7,
-  patience: 7,
-  focus: 8,
-  greed: 2,
-  frustration: 1,
-  emotionStable: false,
-  noFomo: false,
-  followingPlan: false
-};
-
-const defaultJournal: JournalState = {
-  whatDoISee: '',
-  whyShouldPriceMove: '',
-  whatInvalidates: '',
-  whatEmotion: '',
-  targetLiquidity: '',
-  whatMistake: ''
-};
+const defaultScreenshots: TradeScreenshots = { htfScreenshot: '', entryScreenshot: '' };
 
 export default function App() {
   const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
-
-  // Local Storage state hooks
-  const [savedDate, setSavedDate] = useLocalStorage<string>('trading_edge_date', currentDate);
-  const [marketStructure, setMarketStructure] = useLocalStorage<MarketStructureState>('trading_edge_ms', defaultMarketStructure);
-  const [keyLevels, setKeyLevels] = useLocalStorage<KeyLevelsState>('trading_edge_kl', defaultKeyLevels);
-  const [sessionConfirmation, setSessionConfirmation] = useLocalStorage<SessionConfirmationState>('trading_edge_sc', defaultSessionConfirmation);
-  const [entryConfirmation, setEntryConfirmation] = useLocalStorage<EntryConfirmationState>('trading_edge_ec', defaultEntryConfirmation);
-  const [riskManagement, setRiskManagement] = useLocalStorage<RiskManagementState>('trading_edge_rm', defaultRiskManagement);
-  const [psychology, setPsychology] = useLocalStorage<PsychologyState>('trading_edge_psych', defaultPsychology);
-  const [journal, setJournal] = useLocalStorage<JournalState>('trading_edge_journal', defaultJournal);
-
-  const [isExecuted, setIsExecuted] = useLocalStorage<boolean>('trading_edge_executed', false);
-  const [executedAt, setExecutedAt] = useLocalStorage<string>('trading_edge_executed_at', '');
-
-  // Local session variables
-  const [isResetOpen, setIsResetOpen] = useState(false);
-  const [notification, setNotification] = useState<string | null>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
-  // Real-time ticking clock
+  // Theme
+  const [theme, setTheme] = useLocalStorage<ThemeMode>('tj_theme', 'dark');
+
+  // Daily session state
+  const [savedDate, setSavedDate] = useLocalStorage<string>('tj_date', currentDate);
+  const [dailyPrep, setDailyPrep] = useLocalStorage<DailyPrepState>('tj_prep', defaultDailyPrep);
+  const [marketStructure, setMarketStructure] = useLocalStorage<MarketStructureState>('tj_ms', defaultMarketStructure);
+  const [keyLevels, setKeyLevels] = useLocalStorage<KeyLevelsState>('tj_kl', defaultKeyLevels);
+  const [executionParams, setExecutionParams] = useLocalStorage<ExecutionParamsState>('tj_exec', defaultExecutionParams);
+  const [session, setSession] = useLocalStorage<TradingSession>('tj_session', '');
+  const [nonNegotiables, setNonNegotiables] = useLocalStorage<NonNegotiablesState>('tj_nn', defaultNonNegotiables);
+  const [timelineEntries, setTimelineEntries] = useLocalStorage<TimelineEntry[]>('tj_timeline', []);
+  const [screenshots, setScreenshots] = useLocalStorage<TradeScreenshots>('tj_screenshots', defaultScreenshots);
+
+  // UI state
+  const [notification, setNotification] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  // Apply theme on mount
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  // Real-time clock
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString());
@@ -109,390 +71,283 @@ export default function App() {
     return () => clearInterval(timer);
   }, []);
 
-  // Automatic Daily Reset Check
+  // Automatic daily reset
   useEffect(() => {
     const today = new Date().toISOString().split('T')[0];
     setCurrentDate(today);
-
     if (savedDate !== today) {
-      resetDailySession();
+      resetSession();
       setSavedDate(today);
-      setNotification("New Trading Day Started. Previous Session Cleared.");
-      setTimeout(() => setNotification(null), 8000);
+      showNotification('New trading day started. Previous session cleared.');
     }
   }, [savedDate]);
 
-  // Reset helper
-  const resetDailySession = () => {
-    setMarketStructure(defaultMarketStructure);
-    setKeyLevels(defaultKeyLevels);
-    setSessionConfirmation(defaultSessionConfirmation);
-    setEntryConfirmation(defaultEntryConfirmation);
-    setRiskManagement(defaultRiskManagement);
-    setPsychology(defaultPsychology);
-    setJournal(defaultJournal);
-    setIsExecuted(false);
-    setExecutedAt('');
-  };
-
-  const manualReset = () => {
-    resetDailySession();
-    setNotification("Trading Session Manually Reset.");
-    setTimeout(() => setNotification(null), 4000);
-  };
-
-  // Score Math (Weights: MS 20%, KL 25%, EC 25%, RM 15%, Psych 15%)
-  const calculateScore = (): number => {
-    let score = 0;
-
-    // Market Structure (Max 20%)
-    if (marketStructure.confirm4h) score += 5;
-    if (marketStructure.confirm1h) score += 5;
-    if (marketStructure.confirm15m) score += 5;
-    if (marketStructure.htfAlignment) score += 5;
-
-    // Key Level (Max 25%)
-    if (keyLevels.at1hKeyLevel) score += 5;
-    if (keyLevels.at15mKeyLevel) score += 5;
-    if (keyLevels.freshSupplyZone) score += 5;
-    if (keyLevels.freshDemandZone) score += 5;
-    if (keyLevels.dailyHighLiquidity || keyLevels.dailyLowLiquidity) score += 5;
-
-    // Entry Confirmation (Max 25%)
-    if (sessionConfirmation.sessionAligns) score += 5;
-    if (entryConfirmation.entryType === 'Aggressive') {
-      let count = 0;
-      if (entryConfirmation.liquiditySweep) count++;
-      if (entryConfirmation.mss) count++;
-      if (entryConfirmation.engulfingCandle) count++;
-
-      if (count === 1) score += 5;
-      else if (count === 2) score += 10;
-      else if (count === 3) score += 20;
-    } else if (entryConfirmation.entryType === 'Conservative') {
-      let count = 0;
-      if (entryConfirmation.structureShift) count++;
-      if (entryConfirmation.threeCandle) count++;
-      if (entryConfirmation.retest) count++;
-
-      if (count === 1) score += 5;
-      else if (count === 2) score += 10;
-      else if (count === 3) score += 20;
-    }
-
-    // Risk Management (Max 15%)
-    if (riskManagement.riskOnePercent) score += 5;
-    if (riskManagement.rrThreeToOne) score += 5;
-    if (riskManagement.slDefined && riskManagement.tpDefined) score += 5;
-
-    // Psychology (Max 15%)
-    if (psychology.emotionStable) score += 5;
-    if (psychology.noFomo) score += 5;
-    if (psychology.followingPlan) score += 5;
-
-    return Math.min(score, 100);
-  };
-
-  const calculateTotalConfluences = (): number => {
-    let count = 0;
-    if (marketStructure.confirm4h) count++;
-    if (marketStructure.confirm1h) count++;
-    if (marketStructure.confirm15m) count++;
-    if (marketStructure.htfAlignment) count++;
-
-    count += Object.values(keyLevels).filter(Boolean).length;
-
-    if (sessionConfirmation.sessionAligns) count++;
-
-    if (entryConfirmation.entryType === 'Aggressive') {
-      if (entryConfirmation.liquiditySweep) count++;
-      if (entryConfirmation.mss) count++;
-      if (entryConfirmation.engulfingCandle) count++;
-    } else if (entryConfirmation.entryType === 'Conservative') {
-      if (entryConfirmation.structureShift) count++;
-      if (entryConfirmation.threeCandle) count++;
-      if (entryConfirmation.retest) count++;
-    }
-
-    count += Object.values(riskManagement).filter(val => val === true).length;
-
-    if (psychology.emotionStable) count++;
-    if (psychology.noFomo) count++;
-    if (psychology.followingPlan) count++;
-
-    return count;
-  };
-
-  const calculatePsychScore = (): number => {
-    const { confidence, patience, focus, fear, greed, frustration } = psychology;
-    return Math.round(((confidence + patience + focus + (10 - fear) + (10 - greed) + (10 - frustration)) / 6) * 10);
-  };
-
-  const checkRiskReady = (): boolean => {
-    return !!(
-      riskManagement.riskOnePercent &&
-      riskManagement.rrThreeToOne &&
-      riskManagement.slDefined &&
-      riskManagement.tpDefined
-    );
-  };
-
-  const checkPsychAcceptable = (): boolean => {
-    const score = calculatePsychScore();
-    const { fear, greed, frustration, focus, patience } = psychology;
-    return !(score < 50 || fear >= 7 || greed >= 7 || frustration >= 7 || focus < 4 || patience < 4);
-  };
-
-  // Verdict label helper
-  const getVerdictLabel = (s: number): string => {
-    if (s >= 85) return 'A+ SETUP';
-    if (s >= 70) return 'HIGH PROBABILITY';
-    if (s >= 50) return 'WAIT';
-    return 'NO TRADE';
-  };
-
-  const score = calculateScore();
-  const totalConfluences = calculateTotalConfluences();
-  const psychScore = calculatePsychScore();
-  const isRiskReadyVal = checkRiskReady();
-  const isPsychAcceptable = checkPsychAcceptable();
-  const verdictLabel = getVerdictLabel(score);
-
-  // Activator state for READY TO EXECUTE
-  const isReadyToExecute = score >= 70 && isPsychAcceptable && isRiskReadyVal;
-
-  const handleExecute = () => {
-    if (!isReadyToExecute) return;
-    setIsExecuted(true);
-    setExecutedAt(new Date().toLocaleTimeString());
-    setNotification("Trade Executed Successfully. Mindset Locked.");
+  const showNotification = (msg: string) => {
+    setNotification(msg);
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // Theme styling based on score thresholds
-  let edgeThemeClass = "border-white/5 shadow-black/80";
-  if (score >= 85) {
-    edgeThemeClass = "border-amber-500/20 shadow-amber-950/10 animate-glow-gold";
-  } else if (score >= 70) {
-    edgeThemeClass = "border-emerald-500/20 shadow-emerald-950/10 animate-glow-green";
-  }
+  const resetSession = () => {
+    setDailyPrep(defaultDailyPrep);
+    setMarketStructure(defaultMarketStructure);
+    setKeyLevels(defaultKeyLevels);
+    setExecutionParams(defaultExecutionParams);
+    setSession('');
+    setNonNegotiables(defaultNonNegotiables);
+    setTimelineEntries([]);
+    setScreenshots(defaultScreenshots);
+  };
 
-  // Execution Gateway panel — reused in both desktop sidebar and mobile FAB
-  const executionGatewayContent = (
-    <>
-      <div className={`glass-card p-6 border relative overflow-hidden transition-all duration-500 ${edgeThemeClass}`}>
-        <div className="flex items-center justify-between border-b border-white/5 pb-3 mb-4">
-          <span className="text-xs font-bold text-gray-400 tracking-widest uppercase">Execution Gateway</span>
-          <span className="text-[10px] text-gray-500 font-mono">Discipline Lock</span>
-        </div>
+  const handleManualReset = () => {
+    resetSession();
+    setShowResetConfirm(false);
+    showNotification('Session reset successfully.');
+  };
 
-        <div className="space-y-4">
-          <div className="space-y-2.5 text-xs">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 font-medium">1. Trade Quality Score (≥ 70%)</span>
-              <span className={`font-bold font-mono ${score >= 70 ? 'text-emerald-400' : 'text-red-500'}`}>
-                {score}% {score >= 70 ? "✓" : "✗"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 font-medium">2. Psychology Mindset</span>
-              <span className={`font-bold font-mono ${isPsychAcceptable ? 'text-emerald-400' : 'text-red-500'}`}>
-                {psychScore}% {isPsychAcceptable ? "✓" : "✗"}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400 font-medium">3. Risk Management Parameters</span>
-              <span className={`font-bold font-mono ${isRiskReadyVal ? 'text-emerald-400' : 'text-red-500'}`}>
-                {isRiskReadyVal ? "Ready ✓" : "Incomplete ✗"}
-              </span>
-            </div>
-          </div>
+  // Verdict engine logic
+  const getVerdict = () => {
+    const biases = [marketStructure.bias4h, marketStructure.bias1h, marketStructure.bias15m].filter(Boolean);
+    if (biases.length === 0) {
+      return {
+        text: 'Establish Session Bias',
+        desc: 'Select multi-timeframe bias to calculate session rules.',
+        color: 'var(--text-secondary)',
+        bgColor: 'var(--bg-elevated)',
+        borderColor: 'var(--border-primary)',
+      };
+    }
 
-          {isExecuted ? (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-center py-3.5 rounded-xl font-bold flex flex-col items-center justify-center gap-1 shadow-lg shadow-emerald-950/20">
-              <div className="flex items-center gap-1.5 text-base">
-                <CheckCircle size={18} />
-                <span>SESSION SECURED</span>
-              </div>
-              <span className="text-[10px] font-mono opacity-80">Executed at {executedAt}</span>
-            </div>
-          ) : (
-            <button
-              disabled={!isReadyToExecute}
-              onClick={handleExecute}
-              className={`w-full py-4 rounded-xl font-black text-sm uppercase tracking-widest transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer ${
-                isReadyToExecute
-                  ? 'bg-emerald-500 hover:bg-emerald-400 text-black shadow-lg shadow-emerald-500/20 scale-[1.01] hover:scale-[1.02]'
-                  : 'bg-white/5 border border-white/5 text-gray-500 cursor-not-allowed'
-              }`}
-            >
-              {isReadyToExecute ? <Flame size={16} className="animate-pulse" /> : null}
-              Ready To Execute
-            </button>
-          )}
+    const hasBullish = biases.includes('Bullish');
+    const hasBearish = biases.includes('Bearish');
+    const hasRange = biases.includes('Range');
 
-          {!isReadyToExecute && (
-            <div className="p-3 bg-amber-500/5 border border-amber-500/15 rounded-lg flex items-start gap-2.5">
-              <Info size={14} className="text-amber-500 flex-shrink-0 mt-0.5" />
-              <p className="text-[10px] text-gray-400 leading-normal font-medium">
-                To unlock the execution gateway, ensure your quality score is green (≥ 70%), risk check confluences are all complete, and emotional state is safe.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
+    if (hasRange || (hasBullish && hasBearish)) {
+      return {
+        text: 'NO TRADE',
+        desc: 'Market is ranging or conflicting. Wait for clean structure alignment.',
+        color: '#fbbf24',
+        bgColor: 'rgba(251, 191, 36, 0.08)',
+        borderColor: 'rgba(251, 191, 36, 0.25)',
+      };
+    }
 
-      {/* Motivation card */}
-      {score >= 85 && (
-        <motion.div
-          initial={{ scale: 0.95, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="p-4 bg-amber-500/10 border border-amber-500/25 rounded-xl flex items-center gap-3 relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-16 h-16 bg-amber-500/5 rounded-full blur-xl" />
-          <Flame size={20} className="text-amber-400 animate-bounce flex-shrink-0" />
-          <div>
-            <p className="text-xs font-bold text-amber-300">🔥 A+ Setup Detected</p>
-            <p className="text-[10px] text-gray-400 mt-0.5 font-light">"Patience created this setup. You waited for confirmation. Trade like a professional."</p>
-          </div>
-        </motion.div>
-      )}
-    </>
-  );
+    if (hasBullish) {
+      return {
+        text: 'Only trade Bullish positions',
+        desc: 'Trend structure is aligned Bullish. Look for long triggers only.',
+        color: 'var(--success)',
+        bgColor: 'var(--success-muted)',
+        borderColor: 'rgba(52, 211, 153, 0.25)',
+      };
+    }
+
+    if (hasBearish) {
+      return {
+        text: 'Only trade Bearish positions',
+        desc: 'Trend structure is aligned Bearish. Look for short triggers only.',
+        color: '#ef4444',
+        bgColor: 'rgba(239, 68, 68, 0.08)',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+      };
+    }
+
+    return {
+      text: 'Establish Session Bias',
+      desc: 'Select multi-timeframe bias to calculate session rules.',
+      color: 'var(--text-secondary)',
+      bgColor: 'var(--bg-elevated)',
+      borderColor: 'var(--border-primary)',
+    };
+  };
+
+  const verdict = getVerdict();
 
   return (
-    <div className="min-h-screen pb-12 px-4 md:px-8 max-w-7xl mx-auto space-y-6 pt-4">
+    <div className="min-h-screen pb-16 px-4 md:px-8 max-w-4xl mx-auto pt-4">
 
-      {/* Top Banner Notifications */}
+      {/* Notification Banner */}
       <AnimatePresence>
         {notification && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 glass-card px-5 py-3 border border-emerald-500/30 bg-emerald-950/80 text-emerald-300 text-xs font-bold flex items-center gap-3 shadow-xl"
+            className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 px-5 py-3 rounded-xl text-xs font-bold flex items-center gap-3 shadow-xl"
+            style={{
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border-active)',
+              color: 'var(--accent)',
+              backdropFilter: 'blur(12px)',
+            }}
           >
-            <Sparkles size={16} className="text-amber-400 animate-spin" />
+            <Sparkles size={14} />
             <span>{notification}</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* HEADER SECTION */}
-      <header className="glass-card p-6 border border-white/5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-        {/* Background glow overlay */}
-        <div className="absolute top-0 left-1/2 transform -translate-x-1/2 w-96 h-12 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="space-y-1">
+      {/* Header */}
+      <header
+        className="glass-card p-5 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
+        id="app-header"
+      >
+        <div>
           <div className="flex items-center gap-2.5">
-            <span className="h-2.5 w-2.5 bg-emerald-500 rounded-full animate-ping" />
-            <h1 className="text-xl md:text-2xl font-black text-white tracking-wider font-mono">
-              6O.CJFX TRADING EDGE
+            <span
+              className="h-2 w-2 rounded-full animate-pulse"
+              style={{ background: 'var(--accent)' }}
+            />
+            <h1
+              className="text-lg md:text-xl font-extrabold tracking-wide"
+              style={{ color: 'var(--text-primary)', fontFamily: "'Outfit', sans-serif" }}
+            >
+              6O.CJFX Trading Journal
             </h1>
           </div>
-          <p className="text-[10px] text-gray-400 tracking-widest font-bold uppercase">
-            Discipline Cockpit & checklist engine
+          <p className="text-[10px] mt-0.5 uppercase tracking-widest font-semibold" style={{ color: 'var(--text-muted)' }}>
+            Discretionary Trading Workspace
           </p>
         </div>
 
-        {/* Quotes Scroller */}
-        <div className="flex-1 max-w-md mx-auto hidden lg:block text-center px-4 py-2 border-l border-r border-white/5">
-          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-widest font-mono block mb-0.5">Daily Directives</span>
-          <p className="text-xs text-gray-300 font-medium italic">
-            "{getDailyQuote(currentDate)}"
-          </p>
-        </div>
-
-        {/* Date, Time & Reset Action */}
-        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end border-t md:border-t-0 border-white/5 pt-3 md:pt-0">
+        <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+          {/* Date & Time */}
           <div className="text-right font-mono text-xs">
-            <div className="text-white font-bold">{currentDate}</div>
-            <div className="text-gray-400 mt-0.5">{currentTime}</div>
+            <div className="font-bold" style={{ color: 'var(--text-primary)' }}>{currentDate}</div>
+            <div className="mt-0.5" style={{ color: 'var(--text-muted)' }}>{currentTime}</div>
           </div>
 
+          {/* Theme Toggle */}
+          <ThemeToggle theme={theme} setTheme={setTheme} />
+
+          {/* Reset Button */}
           <button
-            onClick={() => setIsResetOpen(true)}
-            className="px-3.5 py-2 text-xs font-bold text-gray-300 hover:text-white bg-white/5 border border-white/10 hover:bg-white/10 rounded-lg flex items-center gap-2 cursor-pointer transition-all shadow-md"
+            onClick={() => setShowResetConfirm(true)}
+            className="p-2.5 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105"
+            style={{
+              background: 'var(--bg-elevated)',
+              border: '1px solid var(--border-primary)',
+              color: 'var(--text-secondary)',
+            }}
+            title="Reset Session"
           >
-            🔄 Reset Session
+            <RotateCcw size={15} />
           </button>
         </div>
       </header>
 
-      {/* DASHBOARD COCKPIT GRID */}
-      <main className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+      {/* Dynamic Verdict Engine Banner */}
+      <div
+        className="glass-card p-4 mb-5 flex items-center gap-4 transition-all duration-300"
+        style={{
+          backgroundColor: verdict.bgColor,
+          borderColor: verdict.borderColor,
+        }}
+      >
+        <div
+          className="p-2 rounded-lg"
+          style={{
+            background: 'var(--bg-elevated)',
+            color: verdict.color,
+          }}
+        >
+          <AlertTriangle size={18} />
+        </div>
+        <div>
+          <div className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--text-muted)' }}>
+            Current Verdict Rule
+          </div>
+          <h2 className="text-sm font-extrabold mt-0.5" style={{ color: verdict.color }}>
+            {verdict.text}
+          </h2>
+          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
+            {verdict.desc}
+          </p>
+        </div>
+      </div>
 
-        {/* Sticky left column: Non-Negotiables (desktop only) */}
-        <section className="hidden lg:block lg:col-span-1 lg:sticky lg:top-6 space-y-6">
-          <NonNegotiables />
-        </section>
+      {/* Main Sections */}
+      <main className="space-y-5">
+        {/* Section 1 — Daily Preparation */}
+        <DailyPreparation prep={dailyPrep} setPrep={setDailyPrep} />
 
-        {/* Mobile Non-Negotiables (collapsible would be nice, but keeping it simple) */}
-        <section className="lg:hidden">
-          <NonNegotiables />
-        </section>
+        {/* Row 1 — Market Structure & Key Levels */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <MarketStructure structure={marketStructure} setStructure={setMarketStructure} />
+          <KeyLevels levels={keyLevels} setLevels={setKeyLevels} />
+        </div>
 
-        {/* Checklist Inputs (2 cols width on LG) */}
-        <section className="lg:col-span-2 space-y-6">
-          <SessionChecklist
-            marketStructure={marketStructure}
-            setMarketStructure={setMarketStructure}
-            keyLevels={keyLevels}
-            setKeyLevels={setKeyLevels}
-            sessionConfirmation={sessionConfirmation}
-            setSessionConfirmation={setSessionConfirmation}
-            entryConfirmation={entryConfirmation}
-            setEntryConfirmation={setEntryConfirmation}
-            riskManagement={riskManagement}
-            setRiskManagement={setRiskManagement}
-            psychology={psychology}
-            setPsychology={setPsychology}
-            journal={journal}
-            setJournal={setJournal}
-          />
-        </section>
+        {/* Row 2 — Execution Parameters & Session + Non Negotiables */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <ExecutionParams params={executionParams} setParams={setExecutionParams} />
+          <div className="flex flex-col gap-5">
+            <SessionSelector session={session} setSession={setSession} />
+            <NonNegotiables nonNegotiables={nonNegotiables} setNonNegotiables={setNonNegotiables} />
+          </div>
+        </div>
 
-        {/* Sticky right column: Verdict Engine + Execution Gateway (desktop only) */}
-        <section className="hidden lg:block lg:col-span-1 lg:sticky lg:top-6 space-y-6">
-          <ScoreEngine score={score} confluencesCount={totalConfluences} />
-          {executionGatewayContent}
-        </section>
-      </main>
+        {/* Section 5 — Trading Timeline Journal (Primary Feature) */}
+        <TradingTimeline entries={timelineEntries} setEntries={setTimelineEntries} />
 
-      {/* TRADING JOURNAL (replaces old Analytics Center) */}
-      <section className="border-t border-white/5 pt-8">
-        <TradingJournal
+        {/* PDF Export */}
+        <PDFExport
           date={currentDate}
+          dailyPrep={dailyPrep}
           marketStructure={marketStructure}
           keyLevels={keyLevels}
-          sessionConfirmation={sessionConfirmation}
-          entryConfirmation={entryConfirmation}
-          riskManagement={riskManagement}
-          psychology={psychology}
-          journal={journal}
-          score={score}
-          psychScore={psychScore}
-          confluencesCount={totalConfluences}
-          isRiskReady={isRiskReadyVal}
-          verdictLabel={verdictLabel}
-          isExecuted={isExecuted}
-          executedAt={executedAt}
+          executionParams={executionParams}
+          timelineEntries={timelineEntries}
+          screenshots={screenshots}
+          setScreenshots={setScreenshots}
+          session={session}
+          nonNegotiables={nonNegotiables}
+          verdictText={verdict.text}
         />
-      </section>
+      </main>
 
-      {/* MOBILE VERDICT FAB (only visible on mobile/tablet) */}
-      <MobileVerdictFAB score={score} verdictLabel={verdictLabel}>
-        <ScoreEngine score={score} confluencesCount={totalConfluences} />
-        {executionGatewayContent}
-      </MobileVerdictFAB>
-
-      {/* CONFIRMATION MODALS */}
-      <ResetModal
-        isOpen={isResetOpen}
-        onClose={() => setIsResetOpen(false)}
-        onConfirm={manualReset}
-      />
-
+      {/* Reset Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
+            onClick={() => setShowResetConfirm(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="glass-card p-6 max-w-sm w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                Reset Trading Session?
+              </h3>
+              <p className="text-xs mb-5 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                This will clear all sections including market structure, key levels, execution parameters, session, non-negotiables, timeline entries, and uploaded screenshots.
+              </p>
+              <div className="flex gap-2.5">
+                <button
+                  onClick={handleManualReset}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                  style={{ background: '#ef4444', color: '#fff' }}
+                >
+                  Reset Session
+                </button>
+                <button
+                  onClick={() => setShowResetConfirm(false)}
+                  className="flex-1 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition-all"
+                  style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-primary)', color: 'var(--text-secondary)' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

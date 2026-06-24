@@ -1,0 +1,286 @@
+# Trading Journal Website Revision (Final Version)
+
+## Overall Goal
+
+Simplify the website significantly.
+
+The current version contains too many sections, calculations, verdict engines, scores, and trading decision systems.
+
+This application should function as a clean discretionary trading journal and market analysis workspace.
+
+Focus on clarity, speed, organization, and simplicity.
+
+---
+
+# Layout Structure
+
+## 1. Daily Market Preparation
+
+Simple section for:
+
+* Previous Daily High (PDH)
+* Previous Daily Low (PDL)
+
+These serve only as reminders that I have marked them on my chart.
+
+No calculations required.
+
+---
+
+## 2. Multi-Timeframe Market Structure
+
+Retain the existing Market Structure section.
+
+Allow manual selection of:
+
+### 4H Bias
+
+* Bullish
+* Bearish
+* Range
+
+### 1H Bias
+
+* Bullish
+* Bearish
+* Range
+
+### 15M Bias
+
+* Bullish
+* Bearish
+* Range
+
+Purpose:
+
+Provide a quick reminder of the current market direction on each timeframe.
+
+No automated analysis.
+
+No AI-generated bias.
+
+No scoring system.
+
+---
+
+## 3. High Timeframe Key Levels
+
+Replace the current Key Level section with simple confluence checkboxes.
+
+### 4H Levels
+
+☐ 4H Demand Zone
+
+☐ 4H Supply Zone
+
+☐ 4H Order Block
+
+---
+
+### 1H Levels
+
+☐ 1H Demand Zone
+
+☐ 1H Supply Zone
+
+☐ 1H Order Block
+
+---
+
+### 15M Levels
+
+☐ 15M Demand Zone
+
+☐ 15M Supply Zone
+
+☐ 15M Order Block
+
+Purpose:
+
+Quickly identify which higher-timeframe zones are currently relevant.
+
+No price calculations.
+
+No zone generators.
+
+No AI suggestions.
+
+---
+
+## 4. Execution Parameters
+
+### Aggressive Entry Model
+
+Allow manual confirmation of:
+
+☐ Liquidity sweep of inducement or previous highs/lows
+
+☐ Engulfing candle formed
+
+☐ Candle closed above/below swept level
+
+Purpose:
+
+Simple confirmation that the setup matches my trading model.
+
+No readiness score.
+
+No execution gateway.
+
+No trade approval system.
+
+---
+
+## 5. Trading Timeline Journal
+
+This is the primary journaling feature.
+
+Remove:
+
+* Emotional sliders
+* Psychology ratings
+* Confidence scores
+* Checklist journals
+* Trade scoring
+
+Replace with a timestamped timeline.
+
+Example:
+
+09:00 AM - Plotted previous daily high and low.
+
+03:00 PM - Started top-down analysis.
+
+04:30 PM - Price entered 4H demand zone.
+
+05:15 PM - 15M bullish engulfing formed.
+
+Requirements:
+
+* Add Note
+* Edit Note
+* Delete Note
+* Manual Timestamp
+* Automatic Timestamp Option
+* Chronological Timeline Display
+
+This should be the main note-taking feature of the website.
+
+---
+
+# PDF Export
+
+The exported PDF should be extremely simple.
+
+Maximum: One Page
+
+Clean white background.
+
+Modern and professional layout.
+
+No unnecessary statistics.
+
+No AI analysis.
+
+No scorecards.
+
+No dashboards.
+
+---
+
+## PDF Content
+
+### Section 1
+
+Trade Setup Screenshot
+
+Allow upload or attachment of:
+
+* 4H Screenshot
+  or
+* 1H Screenshot
+
+This represents the higher timeframe context.
+
+---
+
+### Section 2
+
+Entry Confirmation Screenshot
+
+Allow upload or attachment of:
+
+* 15M Screenshot
+* 5M Screenshot
+
+This represents the execution confirmation.
+
+---
+
+### Section 3
+
+Trading Timeline Notes
+
+Display all timeline entries for that trade.
+
+Example:
+
+09:00 AM - Marked PDH and PDL
+
+03:00 PM - Started top-down analysis
+
+04:15 PM - Entered demand zone
+
+05:00 PM - Bullish engulfing formed
+
+---
+
+The exported report should resemble a professional trade review sheet and fit entirely on a single page whenever possible.
+
+---
+
+# Theme Support
+
+Add a Theme Toggle.
+
+### Light Mode
+
+* White background
+* Dark text
+* Clean professional appearance
+
+### Dark Mode
+
+* Dark background
+* Light text
+* Trading workstation aesthetic
+
+Requirements:
+
+* Theme preference persists after refresh
+* Smooth theme transition
+* Consistent styling throughout the application
+
+---
+
+# Design Requirements
+
+Style Direction:
+
+* Minimalist
+* Modern
+* Clean
+* Organized
+* Fast
+* Professional
+
+Avoid:
+
+* Excessive widgets
+* Overcrowded dashboards
+* Complex trading calculators
+* AI trade recommendations
+* Gamification
+* Large score cards
+
+The final product should feel like a professional discretionary trader's workspace rather than an automated trading platform.

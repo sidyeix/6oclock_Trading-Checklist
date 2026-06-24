@@ -1,125 +1,324 @@
 @import "tailwindcss";
 
+/* ============================================
+   THEME SYSTEM — CSS Custom Properties
+   ============================================ */
+
+/* Dark Mode (Default) — Trading Workstation Aesthetic */
+:root {
+  --bg-primary: #0b0c10;
+  --bg-secondary: #12131a;
+  --bg-card: rgba(18, 19, 28, 0.75);
+  --bg-card-hover: rgba(24, 25, 36, 0.9);
+  --bg-input: #0e0f16;
+  --bg-elevated: rgba(255, 255, 255, 0.03);
+
+  --text-primary: #f0f1f5;
+  --text-secondary: #a1a4b0;
+  --text-muted: #5c5f6e;
+  --text-accent: #60a5fa;
+
+  --border-primary: rgba(255, 255, 255, 0.06);
+  --border-secondary: rgba(255, 255, 255, 0.1);
+  --border-active: rgba(96, 165, 250, 0.35);
+
+  --accent: #60a5fa;
+  --accent-muted: rgba(96, 165, 250, 0.12);
+  --accent-hover: #93bbfd;
+
+  --success: #34d399;
+  --success-muted: rgba(52, 211, 153, 0.1);
+
+  --checkbox-checked-bg: rgba(96, 165, 250, 0.12);
+  --checkbox-checked-border: rgba(96, 165, 250, 0.3);
+  --checkbox-checked-text: #60a5fa;
+
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 8px 32px rgba(0, 0, 0, 0.6);
+
+  --transition-theme: background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease, box-shadow 0.35s ease;
+
+  color-scheme: dark;
+}
+
+/* Light Mode — Clean Professional */
+[data-theme="light"] {
+  --bg-primary: #f8f9fb;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-card-hover: rgba(255, 255, 255, 0.95);
+  --bg-input: #f3f4f6;
+  --bg-elevated: rgba(0, 0, 0, 0.02);
+
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #9ca3af;
+  --text-accent: #2563eb;
+
+  --border-primary: rgba(0, 0, 0, 0.06);
+  --border-secondary: rgba(0, 0, 0, 0.1);
+  --border-active: rgba(37, 99, 235, 0.3);
+
+  --accent: #2563eb;
+  --accent-muted: rgba(37, 99, 235, 0.08);
+  --accent-hover: #1d4ed8;
+
+  --success: #059669;
+  --success-muted: rgba(5, 150, 105, 0.08);
+
+  --checkbox-checked-bg: rgba(37, 99, 235, 0.08);
+  --checkbox-checked-border: rgba(37, 99, 235, 0.25);
+  --checkbox-checked-text: #2563eb;
+
+  --shadow-card: 0 1px 8px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.08);
+
+  color-scheme: light;
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
 @layer base {
   body {
-    background-color: #0c0d12;
-    color: #e2e8f0;
-    font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Inter', 'Outfit', system-ui, -apple-system, sans-serif;
     min-height: 100vh;
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(34, 197, 94, 0.03) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(251, 191, 36, 0.02) 0px, transparent 50%),
-      radial-gradient(at 50% 100%, rgba(168, 85, 247, 0.02) 0px, transparent 50%);
-    background-attachment: fixed;
+    transition: var(--transition-theme);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
 @utility glass-card {
-  background: rgba(20, 21, 28, 0.7);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
-  border-radius: 12px;
+  background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-primary);
+  box-shadow: var(--shadow-card);
+  border-radius: 14px;
+  transition: var(--transition-theme);
 }
 
 @utility glass-card-hover {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   &:hover {
-    border-color: rgba(255, 255, 255, 0.1);
-    background: rgba(24, 25, 34, 0.85);
-    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.7);
-    transform: translateY(-2px);
+    border-color: var(--border-secondary);
+    background: var(--bg-card-hover);
+    box-shadow: var(--shadow-elevated);
+    transform: translateY(-1px);
   }
 }
 
-@utility glow-green {
-  box-shadow: 0 0 25px rgba(34, 197, 94, 0.25);
-  border-color: rgba(34, 197, 94, 0.4) !important;
-}
+/* ============================================
+   SCROLLBAR (Dark/Light Aware)
+   ============================================ */
 
-@utility glow-gold {
-  box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
-  border-color: rgba(251, 191, 36, 0.5) !important;
-}
-
-@keyframes pulse-glow-green {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.2), inset 0 0 12px rgba(34, 197, 94, 0.05);
-    border-color: rgba(34, 197, 94, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 35px rgba(34, 197, 94, 0.4), inset 0 0 20px rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.7);
-  }
-}
-
-@keyframes pulse-glow-gold {
-  0%, 100% {
-    box-shadow: 0 0 22px rgba(251, 191, 36, 0.25), inset 0 0 12px rgba(251, 191, 36, 0.05);
-    border-color: rgba(251, 191, 36, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(251, 191, 36, 0.55), inset 0 0 25px rgba(251, 191, 36, 0.15);
-    border-color: rgba(251, 191, 36, 0.8);
-  }
-}
-
-@utility animate-glow-green {
-  animation: pulse-glow-green 2.5s infinite ease-in-out;
-}
-
-@utility animate-glow-gold {
-  animation: pulse-glow-gold 2.5s infinite ease-in-out;
-}
-
-/* Custom scrollbar for premium terminal appearance */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(12, 13, 18, 0.8);
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--border-secondary);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--text-muted);
 }
 
-/* Custom slider thumb styles for range inputs */
-input[type="range"] {
-  -webkit-appearance: none;
-  appearance: none;
-  background: transparent;
-  cursor: pointer;
+/* ============================================
+   TIMELINE CONNECTOR LINE
+   ============================================ */
+
+.timeline-line {
+  position: absolute;
+  left: 19px;
+  top: 40px;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-primary);
 }
-input[type="range"]::-webkit-slider-runnable-track {
-  background: rgba(255, 255, 255, 0.08);
-  height: 6px;
-  border-radius: 3px;
-}
-input[type="range"]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  margin-top: -5px;
-  background-color: #22c55e;
-  height: 16px;
-  width: 16px;
+
+.timeline-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+  background: var(--accent);
+  border: 2px solid var(--bg-primary);
+  box-shadow: 0 0 0 3px var(--accent-muted);
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+/* ============================================
+   BIAS PILL BUTTONS
+   ============================================ */
+
+.bias-pill {
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
 }
-input[type="range"]::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
+
+.bias-pill:hover {
+  border-color: var(--border-secondary);
+  background: var(--bg-card-hover);
 }
-input[type="range"].slider-red::-webkit-slider-thumb {
-  background-color: #ef4444;
-  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+
+.bias-pill.active-bullish {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
 }
-input[type="range"].slider-gold::-webkit-slider-thumb {
-  background-color: #fbbf24;
-  box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+
+.bias-pill.active-bearish {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.bias-pill.active-range {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+[data-theme="light"] .bias-pill.active-bullish {
+  background: rgba(22, 163, 74, 0.08);
+  border-color: rgba(22, 163, 74, 0.25);
+  color: #16a34a;
+}
+
+[data-theme="light"] .bias-pill.active-bearish {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: #dc2626;
+}
+
+[data-theme="light"] .bias-pill.active-range {
+  background: rgba(217, 119, 6, 0.08);
+  border-color: rgba(217, 119, 6, 0.25);
+  color: #d97706;
+}
+
+/* ============================================
+   CHECKBOX LABEL STYLING
+   ============================================ */
+
+.check-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-primary);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.check-label:hover {
+  border-color: var(--border-secondary);
+}
+
+.check-label.checked {
+  background: var(--checkbox-checked-bg);
+  border-color: var(--checkbox-checked-border);
+}
+
+.check-label.checked .check-text {
+  color: var(--checkbox-checked-text);
+}
+
+/* ============================================
+   SECTION HEADERS
+   ============================================ */
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: var(--accent-muted);
+  color: var(--accent);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.25s ease-out;
+}
+
+/* ============================================
+   SCREENSHOT UPLOAD AREA
+   ============================================ */
+
+.screenshot-upload {
+  border: 2px dashed var(--border-primary);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-muted);
+  text-align: center;
+  min-height: 120px;
+}
+
+.screenshot-upload:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-muted);
+}
+
+/* ============================================
+   PDF PRINT STYLES
+   ============================================ */
+
+@media print {
+  body {
+    background: #fff !important;
+    color: #111 !important;
+  }
 }
