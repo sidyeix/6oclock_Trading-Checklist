@@ -1,0 +1,66 @@
+### Trading Journal & Verdict Engine Improvements
+
+#### 1. Sticky Verdict Engine
+
+* Make the **Verdict Engine remain visible while scrolling**.
+* It should be fixed or sticky so I can continuously monitor the trade score, confidence percentage, and verdict without needing to scroll back up.
+* The Verdict Engine should not obstruct important content but should always be accessible.
+
+#### 2. Replace Analytics Center with Trading Journal
+
+* Remove the current **Analytics Center** section entirely.
+* Replace it with a **Trading Journal** feature.
+* The Trading Journal should automatically compile all trade information entered into the application, including:
+
+  * Market bias per timeframe
+  * Checklist results
+  * Entry details
+  * Risk management details
+  * Final verdict
+  * Notes and observations
+
+#### 3. Downloadable Trade Journal
+
+* Add a **"Download Journal"** button.
+* When clicked, generate a professional trade journal that can be exported as:
+
+  * PDF (preferred)
+  * Image format (optional)
+* The journal should be formatted cleanly and be suitable for record-keeping and performance reviews.
+
+#### 4. Screenshot Support per Timeframe
+
+* Allow image uploads for each timeframe analysis (4H, 1H, 15M, etc.).
+* These screenshots should be:
+
+  * Displayed within the application
+  * Automatically included in the exported PDF journal
+* The final PDF should show each screenshot alongside its corresponding analysis and notes.
+
+#### 5. Remove Position Size Calculator
+
+* Remove the Position Size Calculator section completely.
+* The trading checklist and trade validation process are sufficient for my workflow.
+
+#### 6. Mobile Optimization
+
+* On mobile devices, the Verdict Engine should not appear as a normal section that requires additional scrolling.
+* Instead, display it as a floating overlay positioned at the bottom-right corner of the screen.
+* The overlay should:
+
+  * Remain visible while scrolling
+  * Show the current confidence score and verdict
+  * Be compact and non-intrusive
+  * Expand when tapped to show full details
+
+#### 7. User Experience Goal
+
+The application should function primarily as a **trade execution and journaling tool**, allowing me to:
+
+1. Analyze a setup.
+2. Complete the checklist.
+3. Receive a verdict score.
+4. Attach timeframe screenshots.
+5. Export everything into a professional trading journal PDF for future review.
+
+The focus should be on documentation, review, and decision-making rather than analytics dashboards.

@@ -1,0 +1,659 @@
+# MASTER PROMPT — Build "6O.CJFX Trading Edge"
+
+Build a modern, professional, high-performance web application called **6O.CJFX Trading Edge**.
+
+The purpose of this application is to act as my daily pre-trade checklist, trading discipline system, emotional tracker, and trade decision framework. The goal is to prevent impulsive trades and ensure that only high-quality setups are executed.
+
+This is a personal trading tool inspired by professional prop-firm discipline and institutional trading processes.
+
+---
+
+## Tech Stack
+
+Use:
+
+* React
+* TypeScript
+* Tailwind CSS
+* Framer Motion
+* Recharts
+* React Hooks
+* Local Storage Persistence
+
+Do NOT use:
+
+* Firebase
+* Supabase
+* MongoDB
+* SQL
+* Authentication
+* Backend Server
+
+The entire application should work as a static website and be deployable to GitHub Pages.
+
+---
+
+# Design Requirements
+
+Create a premium, professional trading dashboard.
+
+Style Inspiration:
+
+* FTMO Dashboard
+* TradingView
+* Bloomberg Terminal (clean version)
+* Modern SaaS dashboards
+
+Theme:
+
+* Dark Theme
+* Glassmorphism Cards
+* Green Accent (#22c55e)
+* Gold Accent (#fbbf24)
+* Dark Gray Background
+* Smooth Animations
+* Clean Typography
+* Mobile Responsive
+
+---
+
+# Daily Trading Session Logic
+
+This application should be designed around a single trading day.
+
+Requirements:
+
+## Daily Persistence
+
+If the user refreshes the page:
+
+* Keep all data
+* Keep all checkboxes
+* Keep all notes
+* Keep emotional tracking
+* Keep score calculations
+
+Store everything using Local Storage.
+
+---
+
+## Automatic Daily Reset
+
+Store the current trading date.
+
+Example:
+
+{
+date: "2026-06-22",
+data: {...}
+}
+
+Every time the application loads:
+
+Check if:
+
+savedDate !== currentDate
+
+If true:
+
+Automatically clear today's checklist.
+
+Display notification:
+
+"New Trading Day Started. Previous Session Cleared."
+
+---
+
+## Manual Reset Button
+
+Add a visible button in the top-right corner:
+
+🔄 Reset Trading Session
+
+When clicked:
+
+Show confirmation modal:
+
+"Are you sure you want to reset today's trading session?"
+
+Buttons:
+
+* Cancel
+* Reset Session
+
+Upon confirmation:
+
+* Clear all checklist data
+* Clear emotional tracker
+* Clear notes
+* Reset Trade Quality Score
+* Reset verdict
+
+---
+
+# Header Section
+
+Display:
+
+6O.CJFX Trading Edge
+
+Under it display:
+
+Current Date
+Current Time
+
+Display a motivational trading quote that changes randomly each day.
+
+Examples:
+
+"Protect Capital First."
+"Patience Pays More Than Prediction."
+"Trade the Setup, Not the Emotion."
+"Discipline Creates Consistency."
+
+---
+
+# Section 1 — Trading Rules
+
+Create a fixed card that is always visible.
+
+Title:
+
+Non-Negotiables
+
+Display:
+
+✅ Risk 1% Per Trade
+
+✅ Maximum 1 Trade Per Day
+
+✅ Maximum 1 Loss Per Day
+
+✅ Minimum 1:3 Risk Reward
+
+✅ Target Opposing Supply/Demand
+
+✅ No Revenge Trading
+
+✅ No FOMO Entries
+
+✅ Trade Only During Planned Session
+
+---
+
+# Section 2 — Trade Quality Score Engine
+
+This is the most important feature.
+
+Create a weighted scoring system.
+
+Maximum Score = 100%
+
+Display:
+
+* Animated Progress Bar
+* Circular Progress Ring
+* Percentage Number
+* Real-Time Updates
+
+Color Rules:
+
+0-49%
+Red
+
+50-69%
+Yellow
+
+70-84%
+Green
+
+85-100%
+Gold + Green Glow
+
+---
+
+# Trade Verdict Engine
+
+Automatically generate verdicts:
+
+0-49%
+
+❌ NO TRADE
+
+50-69%
+
+⚠️ WAIT FOR MORE CONFIRMATION
+
+70-84%
+
+✅ HIGH PROBABILITY SETUP
+
+85-100%
+
+🔥 A+ SETUP
+
+Display verdict in a large card.
+
+---
+
+# Score Breakdown
+
+## Market Structure (20%)
+
+4H Bias Confirmed
++5%
+
+1H Bias Confirmed
++5%
+
+15M Bias Confirmed
++5%
+
+HTF Alignment
++5%
+
+---
+
+## Key Level Validation (25%)
+
+1H Key Level
++5%
+
+15M Key Level
++5%
+
+Fresh Supply Zone
++5%
+
+Fresh Demand Zone
++5%
+
+Daily Liquidity Area
++5%
+
+---
+
+## Entry Confirmation (25%)
+
+Liquidity Sweep
++5%
+
+Market Structure Shift
++5%
+
+Engulfing Candle
++5%
+
+Retest
++5%
+
+Session Confirmation
++5%
+
+---
+
+## Risk Management (15%)
+
+Risk = 1%
++5%
+
+RR ≥ 1:3
++5%
+
+SL and TP Defined
++5%
+
+---
+
+## Psychology (15%)
+
+Emotion Stable
++5%
+
+No FOMO
++5%
+
+Following Plan
++5%
+
+---
+
+# Section 3 — Top Down Analysis
+
+Create dropdowns.
+
+4H Bias
+
+Options:
+
+* Bullish
+* Bearish
+* Ranging
+
+1H Bias
+
+Options:
+
+* Bullish
+* Bearish
+* Ranging
+
+15M Bias
+
+Options:
+
+* Bullish
+* Bearish
+* Ranging
+
+Add text areas:
+
+Why is the market bullish or bearish?
+
+For each timeframe.
+
+---
+
+# Section 4 — Key Level Validation
+
+Checkboxes:
+
+☐ At 1H Key Level
+
+☐ At 15M Key Level
+
+☐ Fresh Supply Zone
+
+☐ Fresh Demand Zone
+
+☐ Premium Area
+
+☐ Discount Area
+
+☐ Daily High Liquidity
+
+☐ Daily Low Liquidity
+
+Each checked item should:
+
+* Animate
+* Highlight Green
+* Add Score
+* Fill Progress Bar
+
+Display:
+
+"Confluences Found: X"
+
+Example:
+
+Confluences Found: 7
+
+---
+
+# Section 5 — Session Confirmation
+
+Dropdown:
+
+* London Continuation
+* New York Reversal
+* London-New York Overlap
+
+Checkbox:
+
+☐ Session aligns with setup
+
+Adds score.
+
+---
+
+# Section 6 — Entry Confirmation
+
+Entry Type:
+
+Dropdown
+
+* Aggressive Entry
+* Conservative Entry
+
+---
+
+Aggressive Entry Requirements
+
+☐ Liquidity Sweep
+
+☐ Engulfing Candle
+
+☐ MSS
+
+---
+
+Conservative Entry Requirements
+
+☐ Three Candle Formation
+
+☐ Retest
+
+☐ Structure Shift
+
+---
+
+Checked items contribute to score.
+
+---
+
+# Section 7 — Risk Management
+
+Checkboxes:
+
+☐ Risk = 1%
+
+☐ RR ≥ 1:3
+
+☐ Stop Loss Defined
+
+☐ Take Profit Defined
+
+☐ Position Size Calculated
+
+Create a Risk Management Score.
+
+Display:
+
+"Risk Management Ready"
+
+or
+
+"Risk Parameters Missing"
+
+---
+
+# Section 8 — Emotional Tracker
+
+Create sliders.
+
+Fear
+
+0-10
+
+Confidence
+
+0-10
+
+Patience
+
+0-10
+
+Focus
+
+0-10
+
+Greed
+
+0-10
+
+Frustration
+
+0-10
+
+---
+
+Generate Psychology Score.
+
+Display:
+
+🟢 Optimal Trading State
+
+or
+
+🟡 Caution
+
+or
+
+🔴 Not Suitable To Trade
+
+based on values.
+
+---
+
+# Section 9 — Trade Thought Process Journal
+
+Text Areas:
+
+### What do I see?
+
+### Why should price move from here?
+
+### What invalidates my trade?
+
+### What emotion am I currently feeling?
+
+### What is my target liquidity?
+
+### What mistake am I trying to avoid today?
+
+Autosave everything.
+
+---
+
+# Section 10 — Final Trade Decision
+
+Before entering a trade:
+
+Display:
+
+Trade Quality Score
+
+Confluences Found
+
+Psychology Score
+
+Risk Management Status
+
+Final Verdict
+
+Large button:
+
+"READY TO EXECUTE"
+
+This button should only activate if:
+
+* Score ≥ 70%
+* Psychology Score acceptable
+* Risk requirements completed
+
+Otherwise:
+
+Button Disabled
+
+---
+
+# Section 11 — Motivation System
+
+When score exceeds 70%:
+
+Green glow animation.
+
+When score exceeds 85%:
+
+Gold glow animation.
+
+Show:
+
+🔥 A+ Setup Detected
+
+Display encouraging messages:
+
+"Patience Created This Setup."
+
+"You Waited For Confirmation."
+
+"Trade Like A Professional."
+
+---
+
+# Section 12 — Analytics
+
+Generate charts using Recharts.
+
+Track:
+
+Trade Quality Score Distribution
+
+Confluence Count
+
+Psychology Score
+
+Risk Readiness
+
+Session Type
+
+---
+
+Display:
+
+Most Common Missing Confluence
+
+Most Common Emotional State
+
+Average Daily Score
+
+---
+
+# Section 13 — Local Storage
+
+Automatically save:
+
+* All checkboxes
+* All dropdowns
+* All notes
+* All emotional values
+* Trade score
+* Verdict
+
+Restore data on refresh.
+
+No database.
+
+No backend.
+
+No authentication.
+
+Everything stored locally.
+
+---
+
+# Final Goal
+
+The finished product should feel like a professional trading cockpit.
+
+When I open it before entering the market, it should:
+
+1. Force discipline.
+2. Prevent emotional trades.
+3. Quantify my trading edge.
+4. Visually reward patience and confirmation.
+5. Help me only execute A+ setups.
+6. Automatically reset every new trading day.
+7. Work completely offline after loading.
+8. Be deployable directly to GitHub Pages.
