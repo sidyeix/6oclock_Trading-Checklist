@@ -12,38 +12,51 @@ export interface DailyPrepState {
 
 // Market Structure — simple bias per timeframe
 export type BiasOption = 'Bullish' | 'Bearish' | 'Range' | '';
+export type VerdictOption = 'Bullish' | 'Bearish' | 'Range' | 'No Trade' | '';
 
 export interface MarketStructureState {
   bias4h: BiasOption;
   bias1h: BiasOption;
   bias15m: BiasOption;
+  note4h: string;
+  note1h: string;
+  note15m: string;
+  confirmed4h: boolean;
+  confirmed1h: boolean;
+  confirmed15m: boolean;
 }
 
 // Key Levels — checkboxes grouped by timeframe
+export type KeyLevelOption = 'Demand Zone' | 'Supply Zone' | 'Order Block' | '';
+export type LiquidityOption = 'Asia Swing High/Low' | 'Fair Value Gap' | 'Inducements' | 'Consolidations';
+
+export interface KeyLevelSelection {
+  entry: KeyLevelOption;
+  exit: KeyLevelOption;
+  liquidity: LiquidityOption[];
+}
+
 export interface KeyLevelsState {
-  // 4H
-  demand4h: boolean;
-  supply4h: boolean;
-  orderBlock4h: boolean;
-  // 1H
-  demand1h: boolean;
-  supply1h: boolean;
-  orderBlock1h: boolean;
-  // 15M
-  demand15m: boolean;
-  supply15m: boolean;
-  orderBlock15m: boolean;
+  fourHour: KeyLevelSelection;
+  oneHour: KeyLevelSelection;
+  fifteenMinute: KeyLevelSelection;
 }
 
 // Non Negotiables Checklist
 export interface NonNegotiablesState {
-  htfAlignment: boolean;
-  liquiditySwept: boolean;
-  rrValid: boolean;
+  protectCapital: boolean;
+  oneLossPerDay: boolean;
+  oneTradePerDay: boolean;
+  oneWinPerDay: boolean;
+  emotionsRegulated: boolean;
+  strictlyFollowingPlan: boolean;
 }
 
 // Execution Parameters — Aggressive & Conservative Entry Models
+export type ExecutionModel = 'Aggressive' | 'Conservative' | '';
+
 export interface ExecutionParamsState {
+  model: ExecutionModel;
   // Aggressive
   liquiditySweep: boolean;
   engulfingCandle: boolean;

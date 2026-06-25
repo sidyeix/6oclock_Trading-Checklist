@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { RotateCcw, Sparkles, AlertTriangle } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { RotateCcw, Sparkles } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { ThemeToggle } from './components/ThemeToggle';
 import { DailyPreparation } from './components/DailyPreparation';
@@ -8,86 +8,242 @@ import { MarketStructure } from './components/MarketStructure';
 import { KeyLevels } from './components/KeyLevels';
 import { ExecutionParams } from './components/ExecutionParams';
 import { NonNegotiables } from './components/NonNegotiables';
-import { SessionSelector } from './components/SessionSelector';
+import { VerdictPanel } from './components/VerdictPanel';
 import { TradingTimeline } from './components/TradingTimeline';
 import { PDFExport } from './components/PDFExport';
 import type {
-  ThemeMode, DailyPrepState, MarketStructureState,
-  KeyLevelsState, ExecutionParamsState, TimelineEntry, TradeScreenshots,
-  TradingSession, NonNegotiablesState
+  BiasOption,
+  DailyPrepState,
+  ExecutionParamsState,
+  KeyLevelOption,
+  KeyLevelsState,
+  LiquidityOption,
+  MarketStructureState,
+  NonNegotiablesState,
+  ThemeMode,
+  TimelineEntry,
+  TradeScreenshots,
+  TradingSession,
+  VerdictOption,
 } from './types';
 
-// Default states
 const defaultDailyPrep: DailyPrepState = { pdhMarked: false, pdlMarked: false };
-const defaultMarketStructure: MarketStructureState = { bias4h: '', bias1h: '', bias15m: '' };
+const defaultMarketStructure: MarketStructureState = {
+  bias4h: '',
+  bias1h: '',
+  bias15m: '',
+  note4h: '',
+  note1h: '',
+  note15m: '',
+  confirmed4h: false,
+  confirmed1h: false,
+  confirmed15m: false,
+};
 const defaultKeyLevels: KeyLevelsState = {
-  demand4h: false, supply4h: false, orderBlock4h: false,
-  demand1h: false, supply1h: false, orderBlock1h: false,
-  demand15m: false, supply15m: false, orderBlock15m: false,
+  fourHour: { entry: '', exit: '', liquidity: [] },
+  oneHour: { entry: '', exit: '', liquidity: [] },
+  fifteenMinute: { entry: '', exit: '', liquidity: [] },
 };
 const defaultExecutionParams: ExecutionParamsState = {
-  liquiditySweep: false, engulfingCandle: false, candleClosed: false,
-  chochFormed: false, retestEntry: false, riskEntry: false,
+  model: '',
+  liquiditySweep: false,
+  engulfingCandle: false,
+  candleClosed: false,
+  chochFormed: false,
+  retestEntry: false,
+  riskEntry: false,
 };
 const defaultNonNegotiables: NonNegotiablesState = {
-  htfAlignment: false,
-  liquiditySwept: false,
-  rrValid: false,
+  protectCapital: false,
+  oneLossPerDay: false,
+  oneTradePerDay: false,
+  oneWinPerDay: false,
+  emotionsRegulated: false,
+  strictlyFollowingPlan: false,
 };
 const defaultScreenshots: TradeScreenshots = { htfScreenshot: '', entryScreenshot: '' };
+
+const liquidityOptions: LiquidityOption[] = ['Asia Swing High/Low', 'Fair Value Gap', 'Inducements', 'Consolidations'];
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const normalizeBoolean = (value: unknown) => typeof value === 'boolean' ? value : false;
+
+const normalizeKeyLevelOption = (value: unknown): KeyLevelOption =>
+  value === 'Demand Zone' || value === 'Supply Zone' || value === 'Order Block' ? value : '';
+
+const normalizeBiasOption = (value: unknown) =>
+  value === 'Bullish' || value === 'Bearish' || value === 'Range' ? value : '';
+
+const normalizeString = (value: unknown) => typeof value === 'string' ? value : '';
+
+const normalizeLiquidityOption = (value: unknown): LiquidityOption | '' => {
+  if (value === 'Asia Swing High') return 'Asia Swing High/Low';
+  return liquidityOptions.includes(value as LiquidityOption) ? value as LiquidityOption : '';
+};
+
+const normalizeLiquidity = (value: unknown): LiquidityOption[] => {
+  if (!Array.isArray(value)) return [];
+  return Array.from(new Set(value.map(normalizeLiquidityOption).filter((item): item is LiquidityOption => Boolean(item))));
+};
+
+const normalizeMarketStructure = (value: unknown): MarketStructureState => {
+  if (!isRecord(value)) return defaultMarketStructure;
+
+  return {
+    bias4h: normalizeBiasOption(value.bias4h),
+    bias1h: normalizeBiasOption(value.bias1h),
+    bias15m: normalizeBiasOption(value.bias15m),
+    note4h: normalizeString(value.note4h),
+    note1h: normalizeString(value.note1h),
+    note15m: normalizeString(value.note15m),
+    confirmed4h: normalizeBoolean(value.confirmed4h),
+    confirmed1h: normalizeBoolean(value.confirmed1h),
+    confirmed15m: normalizeBoolean(value.confirmed15m),
+  };
+};
+
+const firstLegacyLevel = (value: Record<string, unknown>, fields: string[]): KeyLevelOption => {
+  for (const field of fields) {
+    if (value[field] === true) {
+      if (field.toLowerCase().includes('demand')) return 'Demand Zone';
+      if (field.toLowerCase().includes('supply')) return 'Supply Zone';
+      if (field.toLowerCase().includes('orderblock')) return 'Order Block';
+    }
+  }
+
+  return '';
+};
+
+const normalizeKeyLevels = (value: unknown): KeyLevelsState => {
+  if (!isRecord(value)) return defaultKeyLevels;
+
+  if (isRecord(value.fourHour) || isRecord(value.oneHour) || isRecord(value.fifteenMinute)) {
+    return {
+      fourHour: {
+        entry: normalizeKeyLevelOption(isRecord(value.fourHour) ? value.fourHour.entry : ''),
+        exit: normalizeKeyLevelOption(isRecord(value.fourHour) ? value.fourHour.exit : ''),
+        liquidity: normalizeLiquidity(isRecord(value.fourHour) ? value.fourHour.liquidity : []),
+      },
+      oneHour: {
+        entry: normalizeKeyLevelOption(isRecord(value.oneHour) ? value.oneHour.entry : ''),
+        exit: normalizeKeyLevelOption(isRecord(value.oneHour) ? value.oneHour.exit : ''),
+        liquidity: normalizeLiquidity(isRecord(value.oneHour) ? value.oneHour.liquidity : []),
+      },
+      fifteenMinute: {
+        entry: normalizeKeyLevelOption(isRecord(value.fifteenMinute) ? value.fifteenMinute.entry : ''),
+        exit: normalizeKeyLevelOption(isRecord(value.fifteenMinute) ? value.fifteenMinute.exit : ''),
+        liquidity: normalizeLiquidity(isRecord(value.fifteenMinute) ? value.fifteenMinute.liquidity : []),
+      },
+    };
+  }
+
+  return {
+    fourHour: { entry: firstLegacyLevel(value, ['demand4h', 'supply4h', 'orderBlock4h']), exit: '', liquidity: [] },
+    oneHour: { entry: firstLegacyLevel(value, ['demand1h', 'supply1h', 'orderBlock1h']), exit: '', liquidity: [] },
+    fifteenMinute: { entry: firstLegacyLevel(value, ['demand15m', 'supply15m', 'orderBlock15m']), exit: '', liquidity: [] },
+  };
+};
+
+const normalizeExecutionParams = (value: unknown): ExecutionParamsState => {
+  if (!isRecord(value)) return defaultExecutionParams;
+
+  const aggressive = {
+    liquiditySweep: normalizeBoolean(value.liquiditySweep),
+    engulfingCandle: normalizeBoolean(value.engulfingCandle),
+    candleClosed: normalizeBoolean(value.candleClosed),
+  };
+  const conservative = {
+    chochFormed: normalizeBoolean(value.chochFormed),
+    retestEntry: normalizeBoolean(value.retestEntry),
+    riskEntry: normalizeBoolean(value.riskEntry),
+  };
+  const hasAggressive = Object.values(aggressive).some(Boolean);
+  const hasConservative = Object.values(conservative).some(Boolean);
+  const model = value.model === 'Aggressive' || value.model === 'Conservative'
+    ? value.model
+    : hasAggressive
+      ? 'Aggressive'
+      : hasConservative
+        ? 'Conservative'
+        : '';
+
+  return {
+    model,
+    liquiditySweep: model === 'Aggressive' ? aggressive.liquiditySweep : false,
+    engulfingCandle: model === 'Aggressive' ? aggressive.engulfingCandle : false,
+    candleClosed: model === 'Aggressive' ? aggressive.candleClosed : false,
+    chochFormed: model === 'Conservative' ? conservative.chochFormed : false,
+    retestEntry: model === 'Conservative' ? conservative.retestEntry : false,
+    riskEntry: model === 'Conservative' ? conservative.riskEntry : false,
+  };
+};
+
+const normalizeNonNegotiables = (value: unknown): NonNegotiablesState => {
+  if (!isRecord(value)) return defaultNonNegotiables;
+
+  return {
+    protectCapital: normalizeBoolean(value.protectCapital),
+    oneLossPerDay: normalizeBoolean(value.oneLossPerDay),
+    oneTradePerDay: normalizeBoolean(value.oneTradePerDay),
+    oneWinPerDay: normalizeBoolean(value.oneWinPerDay),
+    emotionsRegulated: normalizeBoolean(value.emotionsRegulated),
+    strictlyFollowingPlan: normalizeBoolean(value.strictlyFollowingPlan),
+  };
+};
+
+const calculateVerdictStats = (marketStructure: MarketStructureState) => {
+  const biases: BiasOption[] = [
+    marketStructure.bias4h,
+    marketStructure.bias1h,
+    marketStructure.bias15m,
+  ].filter((bias): bias is Exclude<BiasOption, ''> => Boolean(bias));
+  const total = biases.length;
+  const bullish = biases.filter((bias) => bias === 'Bullish').length;
+  const bearish = biases.filter((bias) => bias === 'Bearish').length;
+  const range = biases.filter((bias) => bias === 'Range').length;
+  const max = Math.max(bullish, bearish, range);
+  const leaders = [
+    bullish === max && bullish > 0 ? 'Bullish' : '',
+    bearish === max && bearish > 0 ? 'Bearish' : '',
+    range === max && range > 0 ? 'Range' : '',
+  ].filter(Boolean);
+
+  return {
+    label: total === 0 ? '' as VerdictOption : leaders.length !== 1 ? 'No Trade' as VerdictOption : leaders[0] as VerdictOption,
+    percent: total ? Math.round((max / total) * 100) : 0,
+    bullish,
+    bearish,
+    range,
+    total,
+  };
+};
 
 export default function App() {
   const [currentDate, setCurrentDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
 
-  // Theme
   const [theme, setTheme] = useLocalStorage<ThemeMode>('tj_theme', 'dark');
-
-  // Daily session state
   const [savedDate, setSavedDate] = useLocalStorage<string>('tj_date', currentDate);
   const [dailyPrep, setDailyPrep] = useLocalStorage<DailyPrepState>('tj_prep', defaultDailyPrep);
-  const [marketStructure, setMarketStructure] = useLocalStorage<MarketStructureState>('tj_ms', defaultMarketStructure);
-  const [keyLevels, setKeyLevels] = useLocalStorage<KeyLevelsState>('tj_kl', defaultKeyLevels);
-  const [executionParams, setExecutionParams] = useLocalStorage<ExecutionParamsState>('tj_exec', defaultExecutionParams);
+  const [marketStructure, setMarketStructure] = useLocalStorage<MarketStructureState>('tj_ms', defaultMarketStructure, normalizeMarketStructure);
+  const [keyLevels, setKeyLevels] = useLocalStorage<KeyLevelsState>('tj_kl', defaultKeyLevels, normalizeKeyLevels);
+  const [executionParams, setExecutionParams] = useLocalStorage<ExecutionParamsState>('tj_exec', defaultExecutionParams, normalizeExecutionParams);
   const [session, setSession] = useLocalStorage<TradingSession>('tj_session', '');
-  const [nonNegotiables, setNonNegotiables] = useLocalStorage<NonNegotiablesState>('tj_nn', defaultNonNegotiables);
+  const [nonNegotiables, setNonNegotiables] = useLocalStorage<NonNegotiablesState>('tj_nn', defaultNonNegotiables, normalizeNonNegotiables);
   const [timelineEntries, setTimelineEntries] = useLocalStorage<TimelineEntry[]>('tj_timeline', []);
   const [screenshots, setScreenshots] = useLocalStorage<TradeScreenshots>('tj_screenshots', defaultScreenshots);
 
-  // UI state
   const [notification, setNotification] = useState<string | null>(null);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  // Apply theme on mount
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
-
-  // Real-time clock
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date().toLocaleTimeString());
-    }, 1000);
-    return () => clearInterval(timer);
+  const showNotification = useCallback((msg: string) => {
+    setNotification(msg);
+    window.setTimeout(() => setNotification(null), 5000);
   }, []);
 
-  // Automatic daily reset
-  useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
-    setCurrentDate(today);
-    if (savedDate !== today) {
-      resetSession();
-      setSavedDate(today);
-      showNotification('New trading day started. Previous session cleared.');
-    }
-  }, [savedDate]);
-
-  const showNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 5000);
-  };
-
-  const resetSession = () => {
+  const resetSession = useCallback(() => {
     setDailyPrep(defaultDailyPrep);
     setMarketStructure(defaultMarketStructure);
     setKeyLevels(defaultKeyLevels);
@@ -96,7 +252,50 @@ export default function App() {
     setNonNegotiables(defaultNonNegotiables);
     setTimelineEntries([]);
     setScreenshots(defaultScreenshots);
-  };
+  }, [
+    setDailyPrep,
+    setExecutionParams,
+    setKeyLevels,
+    setMarketStructure,
+    setNonNegotiables,
+    setScreenshots,
+    setSession,
+    setTimelineEntries,
+  ]);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const updateCursorGlow = (event: PointerEvent) => {
+      document.documentElement.style.setProperty('--cursor-x', `${event.clientX}px`);
+      document.documentElement.style.setProperty('--cursor-y', `${event.clientY}px`);
+    };
+
+    window.addEventListener('pointermove', updateCursorGlow, { passive: true });
+    return () => window.removeEventListener('pointermove', updateCursorGlow);
+  }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+      const today = new Date().toISOString().split('T')[0];
+      setCurrentDate((prevDate) => prevDate === today ? prevDate : today);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0];
+    if (savedDate !== today) {
+      window.setTimeout(() => {
+        resetSession();
+        setSavedDate(today);
+        showNotification('New trading day started. Previous session cleared.');
+      }, 0);
+    }
+  }, [savedDate, setSavedDate, resetSession, showNotification]);
 
   const handleManualReset = () => {
     resetSession();
@@ -104,68 +303,11 @@ export default function App() {
     showNotification('Session reset successfully.');
   };
 
-  // Verdict engine logic
-  const getVerdict = () => {
-    const biases = [marketStructure.bias4h, marketStructure.bias1h, marketStructure.bias15m].filter(Boolean);
-    if (biases.length === 0) {
-      return {
-        text: 'Establish Session Bias',
-        desc: 'Select multi-timeframe bias to calculate session rules.',
-        color: 'var(--text-secondary)',
-        bgColor: 'var(--bg-elevated)',
-        borderColor: 'var(--border-primary)',
-      };
-    }
-
-    const hasBullish = biases.includes('Bullish');
-    const hasBearish = biases.includes('Bearish');
-    const hasRange = biases.includes('Range');
-
-    if (hasRange || (hasBullish && hasBearish)) {
-      return {
-        text: 'NO TRADE',
-        desc: 'Market is ranging or conflicting. Wait for clean structure alignment.',
-        color: '#fbbf24',
-        bgColor: 'rgba(251, 191, 36, 0.08)',
-        borderColor: 'rgba(251, 191, 36, 0.25)',
-      };
-    }
-
-    if (hasBullish) {
-      return {
-        text: 'Only trade Bullish positions',
-        desc: 'Trend structure is aligned Bullish. Look for long triggers only.',
-        color: 'var(--success)',
-        bgColor: 'var(--success-muted)',
-        borderColor: 'rgba(52, 211, 153, 0.25)',
-      };
-    }
-
-    if (hasBearish) {
-      return {
-        text: 'Only trade Bearish positions',
-        desc: 'Trend structure is aligned Bearish. Look for short triggers only.',
-        color: '#ef4444',
-        bgColor: 'rgba(239, 68, 68, 0.08)',
-        borderColor: 'rgba(239, 68, 68, 0.25)',
-      };
-    }
-
-    return {
-      text: 'Establish Session Bias',
-      desc: 'Select multi-timeframe bias to calculate session rules.',
-      color: 'var(--text-secondary)',
-      bgColor: 'var(--bg-elevated)',
-      borderColor: 'var(--border-primary)',
-    };
-  };
-
-  const verdict = getVerdict();
+  const verdictStats = calculateVerdictStats(marketStructure);
+  const activeVerdict = verdictStats.label;
 
   return (
-    <div className="min-h-screen pb-16 px-4 md:px-8 max-w-4xl mx-auto pt-4">
-
-      {/* Notification Banner */}
+    <div className="relative z-10 min-h-screen pb-16 px-4 md:px-8 max-w-7xl mx-auto pt-4">
       <AnimatePresence>
         {notification && (
           <motion.div
@@ -186,17 +328,13 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {/* Header */}
       <header
         className="glass-card p-5 mb-5 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"
         id="app-header"
       >
         <div>
           <div className="flex items-center gap-2.5">
-            <span
-              className="h-2 w-2 rounded-full animate-pulse"
-              style={{ background: 'var(--accent)' }}
-            />
+            <span className="h-2 w-2 rounded-full animate-pulse" style={{ background: 'var(--accent)' }} />
             <h1
               className="text-lg md:text-xl font-extrabold tracking-wide"
               style={{ color: 'var(--text-primary)', fontFamily: "'Outfit', sans-serif" }}
@@ -210,16 +348,13 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-          {/* Date & Time */}
           <div className="text-right font-mono text-xs">
             <div className="font-bold" style={{ color: 'var(--text-primary)' }}>{currentDate}</div>
             <div className="mt-0.5" style={{ color: 'var(--text-muted)' }}>{currentTime}</div>
           </div>
 
-          {/* Theme Toggle */}
           <ThemeToggle theme={theme} setTheme={setTheme} />
 
-          {/* Reset Button */}
           <button
             onClick={() => setShowResetConfirm(true)}
             className="p-2.5 rounded-xl flex items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105"
@@ -229,82 +364,77 @@ export default function App() {
               color: 'var(--text-secondary)',
             }}
             title="Reset Session"
+            aria-label="Reset session"
           >
             <RotateCcw size={15} />
           </button>
         </div>
       </header>
 
-      {/* Dynamic Verdict Engine Banner */}
-      <div
-        className="glass-card p-4 mb-5 flex items-center gap-4 transition-all duration-300"
-        style={{
-          backgroundColor: verdict.bgColor,
-          borderColor: verdict.borderColor,
-        }}
-      >
-        <div
-          className="p-2 rounded-lg"
-          style={{
-            background: 'var(--bg-elevated)',
-            color: verdict.color,
-          }}
-        >
-          <AlertTriangle size={18} />
-        </div>
-        <div>
-          <div className="text-[10px] uppercase tracking-widest font-bold" style={{ color: 'var(--text-muted)' }}>
-            Current Verdict Rule
-          </div>
-          <h2 className="text-sm font-extrabold mt-0.5" style={{ color: verdict.color }}>
-            {verdict.text}
-          </h2>
-          <p className="text-[10px] mt-0.5" style={{ color: 'var(--text-secondary)' }}>
-            {verdict.desc}
-          </p>
+      <div className="lg:hidden sticky top-3 z-30 mb-5">
+        <div className="space-y-3">
+          <VerdictPanel
+            marketStructure={marketStructure}
+            stats={verdictStats}
+            activeVerdict={activeVerdict}
+            compact
+          />
+          <NonNegotiables
+            nonNegotiables={nonNegotiables}
+            setNonNegotiables={setNonNegotiables}
+            compact
+          />
         </div>
       </div>
 
-      {/* Main Sections */}
-      <main className="space-y-5">
-        {/* Section 1 — Daily Preparation */}
-        <DailyPreparation prep={dailyPrep} setPrep={setDailyPrep} />
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-5 items-start">
+        <div className="min-w-0">
+          <main className="space-y-5">
+            <DailyPreparation prep={dailyPrep} setPrep={setDailyPrep} />
 
-        {/* Row 1 — Market Structure & Key Levels */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <MarketStructure structure={marketStructure} setStructure={setMarketStructure} />
-          <KeyLevels levels={keyLevels} setLevels={setKeyLevels} />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-stretch">
+              <MarketStructure structure={marketStructure} setStructure={setMarketStructure} />
+              <KeyLevels levels={keyLevels} setLevels={setKeyLevels} />
+            </div>
+
+            <ExecutionParams
+              params={executionParams}
+              setParams={setExecutionParams}
+              session={session}
+              setSession={setSession}
+            />
+
+            <TradingTimeline entries={timelineEntries} setEntries={setTimelineEntries} />
+
+            <PDFExport
+              date={currentDate}
+              dailyPrep={dailyPrep}
+              marketStructure={marketStructure}
+              keyLevels={keyLevels}
+              executionParams={executionParams}
+              timelineEntries={timelineEntries}
+              screenshots={screenshots}
+              setScreenshots={setScreenshots}
+              session={session}
+              nonNegotiables={nonNegotiables}
+              verdictText={activeVerdict || 'Establish Session Bias'}
+            />
+          </main>
         </div>
 
-        {/* Row 2 — Execution Parameters & Session + Non Negotiables */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <ExecutionParams params={executionParams} setParams={setExecutionParams} />
-          <div className="flex flex-col gap-5">
-            <SessionSelector session={session} setSession={setSession} />
-            <NonNegotiables nonNegotiables={nonNegotiables} setNonNegotiables={setNonNegotiables} />
-          </div>
-        </div>
+        <aside className="hidden lg:block sticky top-4 space-y-5">
+          <VerdictPanel
+            marketStructure={marketStructure}
+            stats={verdictStats}
+            activeVerdict={activeVerdict}
+          />
+          <NonNegotiables
+            nonNegotiables={nonNegotiables}
+            setNonNegotiables={setNonNegotiables}
+          />
+        </aside>
+      </div>
 
-        {/* Section 5 — Trading Timeline Journal (Primary Feature) */}
-        <TradingTimeline entries={timelineEntries} setEntries={setTimelineEntries} />
-
-        {/* PDF Export */}
-        <PDFExport
-          date={currentDate}
-          dailyPrep={dailyPrep}
-          marketStructure={marketStructure}
-          keyLevels={keyLevels}
-          executionParams={executionParams}
-          timelineEntries={timelineEntries}
-          screenshots={screenshots}
-          setScreenshots={setScreenshots}
-          session={session}
-          nonNegotiables={nonNegotiables}
-          verdictText={verdict.text}
-        />
-      </main>
-
-      {/* Reset Confirmation Modal */}
       <AnimatePresence>
         {showResetConfirm && (
           <motion.div

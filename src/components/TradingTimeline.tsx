@@ -250,7 +250,7 @@ export const TradingTimeline: FC<TradingTimelineProps> = ({ entries, setEntries 
                   <div className="group">
                     <div className="flex items-start justify-between gap-2">
                       <div style={{ minWidth: 0 }}>
-                        <span className="text-[10px] font-mono font-bold block mb-0.5" style={{ color: 'var(--accent)' }}>
+                        <span className="text-sm font-mono font-bold block mb-1 tabular-nums" style={{ color: 'var(--accent)' }}>
                           {entry.timestamp}
                         </span>
                         <p className="text-xs leading-relaxed" style={{ color: 'var(--text-primary)', wordBreak: 'break-word' }}>
